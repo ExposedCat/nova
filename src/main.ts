@@ -1,7 +1,8 @@
-#!/usr/bin/env -S deno run --allow-run --allow-env --allow-net
+#!/usr/bin/env -S deno run --allow-run --allow-env --allow-net --allow-read --allow-write
 
 import { handleCommand, handleCommandLong } from "./subcommands/command.ts";
 import { handleChat } from "./subcommands/chat.ts";
+import { handleInstall } from "./subcommands/install.ts";
 
 const colors = {
 	green: "\x1b[32m",
@@ -21,6 +22,7 @@ ${colors.bold}SUBCOMMANDS:${colors.reset}
     ${colors.green}command${colors.reset}  <prompt>            Generate and execute shell commands from natural language
     ${colors.green}command${colors.reset}  -l|--long <prompt>  Long mode - continue after execution, stop only on Esc
     ${colors.green}chat${colors.reset}                        Start an interactive chat session with the AI
+    ${colors.green}install${colors.reset}                     Set up shell shortcuts for nova commands
     ${colors.green}help${colors.reset}                        Show this help message
 
 ${colors.bold}EXAMPLES:${colors.reset}
@@ -28,6 +30,7 @@ ${colors.bold}EXAMPLES:${colors.reset}
     nova command --long "create a backup of my home directory"
     nova command -l "list files and then analyze them"
     nova chat
+    nova install
     nova help`);
 }
 
@@ -55,7 +58,6 @@ async function main() {
 					Deno.exit(1);
 				}
 
-				// Check for long mode flags
 				let longMode = false;
 				let promptStart = 0;
 
@@ -86,6 +88,10 @@ async function main() {
 			}
 			case "chat": {
 				await handleChat();
+				break;
+			}
+			case "install": {
+				await handleInstall();
 				break;
 			}
 			case "help":

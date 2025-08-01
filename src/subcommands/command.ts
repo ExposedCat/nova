@@ -16,7 +16,7 @@ async function confirmExecution(
 	command: string,
 ): Promise<{ execute: boolean; userInput?: string }> {
 	console.log(
-		`${colors.bold}${colors.green}$${colors.reset} ${colors.blue}${command}${colors.reset} (Enter/Esc)`,
+		`${colors.bold}${colors.green}$${colors.reset} ${colors.blue}${command}${colors.reset}`,
 	);
 
 	const decoder = new TextDecoder();
@@ -49,7 +49,7 @@ async function confirmExecutionLong(
 	command: string,
 ): Promise<{ execute: boolean; userInput?: string; escape: boolean }> {
 	console.log(
-		`${colors.bold}${colors.green}$${colors.reset} ${colors.blue}${command}${colors.reset} (Enter/Esc)`,
+		`${colors.bold}${colors.green}$${colors.reset} ${colors.blue}${command}${colors.reset}`,
 	);
 
 	const decoder = new TextDecoder();
