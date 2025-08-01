@@ -1,6 +1,6 @@
 {
   "tasks": {
     "dev": "deno run --allow-net --allow-run --allow-env main.ts",
-    "build": "deno compile --allow-net --allow-run --allow-env --output jarvis src/main.ts"
+    "build": "deno compile --allow-net --allow-run --allow-env --output nova src/main.ts"
   }
 }

@@ -47,7 +47,7 @@ export async function handleChat() {
 
 				await Deno.stdout.write(
 					new TextEncoder().encode(
-						`${colors.bold}${colors.green}jarvis:${colors.reset} `,
+						`${colors.bold}${colors.green}nova:${colors.reset} `,
 					),
 				);
 				console.log(response.trim());

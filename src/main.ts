@@ -12,10 +12,10 @@ const colors = {
 };
 
 function showHelp() {
-	console.log(`${colors.bold}jarvis${colors.reset} - AI-powered command line assistant
+	console.log(`${colors.bold}NOVA${colors.reset} - AI-powered command line assistant
 
 ${colors.bold}USAGE:${colors.reset}
-    jarvis <subcommand> [arguments]
+    nova <subcommand> [arguments]
 
 ${colors.bold}SUBCOMMANDS:${colors.reset}
     ${colors.green}command${colors.reset}  <prompt>            Generate and execute shell commands from natural language
@@ -24,11 +24,11 @@ ${colors.bold}SUBCOMMANDS:${colors.reset}
     ${colors.green}help${colors.reset}                        Show this help message
 
 ${colors.bold}EXAMPLES:${colors.reset}
-    jarvis command "show me all running processes"
-    jarvis command --long "create a backup of my home directory"
-    jarvis command -l "list files and then analyze them"
-    jarvis chat
-    jarvis help`);
+    nova command "show me all running processes"
+    nova command --long "create a backup of my home directory"
+    nova command -l "list files and then analyze them"
+    nova chat
+    nova help`);
 }
 
 async function main() {
@@ -47,10 +47,10 @@ async function main() {
 			case "command": {
 				if (subcommandArgs.length === 0) {
 					console.error("Error: 'command' subcommand requires a prompt");
-					console.error("Usage: jarvis command '<your prompt>'");
-					console.error("       jarvis command -l|--long '<your prompt>'");
+					console.error("Usage: nova command '<your prompt>'");
+					console.error("       nova command -l|--long '<your prompt>'");
 					console.error(
-						"Example: jarvis command 'show me all running processes'",
+						"Example: nova command 'show me all running processes'",
 					);
 					Deno.exit(1);
 				}
@@ -67,9 +67,9 @@ async function main() {
 						console.error(
 							"Error: 'command' subcommand with -l/--long requires a prompt",
 						);
-						console.error("Usage: jarvis command -l|--long '<your prompt>'");
+						console.error("Usage: nova command -l|--long '<your prompt>'");
 						console.error(
-							"Example: jarvis command --long 'list files and analyze them'",
+							"Example: nova command --long 'list files and analyze them'",
 						);
 						Deno.exit(1);
 					}
@@ -96,13 +96,13 @@ async function main() {
 			}
 			default: {
 				console.error(`Error: Unknown subcommand '${subcommand}'`);
-				console.error("Run 'jarvis help' to see available subcommands");
+				console.error("Run 'nova help' to see available subcommands");
 				Deno.exit(1);
 			}
 		}
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		console.error(`jarvis: error: ${errorMessage}`);
+		console.error(`nova: error: ${errorMessage}`);
 		Deno.exit(1);
 	}
 }
