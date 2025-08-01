@@ -1,0 +1,119 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DENO_VERSION: v2.x
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ${{ matrix.os }}
+    if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            output: nova-linux-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            output: nova-macos-arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
+
+      - name: Build binary
+        run: |
+          deno compile \
+            --allow-net \
+            --allow-run \
+            --allow-env \
+            --allow-read \
+            --allow-write \
+            --target ${{ matrix.target }} \
+            --output ${{ matrix.output }} \
+            src/main.ts
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: ${{ matrix.output }}*
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Generate version
+        id: version
+        run: |
+          # Get the short commit SHA
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          # Get the current date
+          DATE=$(date +'%Y%m%d')
+          # Create version string
+          VERSION="v${DATE}-${SHORT_SHA}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Generated version: ${VERSION}"
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find ./artifacts -name "nova-*" -type f -exec cp {} ./release/ \;
+          ls -la ./release/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body: |
+            🚀 **NOVA Release ${{ steps.version.outputs.version }}**
+
+            Automated release from commit ${{ github.sha }}
+
+            ## 📦 Download the appropriate binary for your platform:
+
+            - **Linux (x64)**: `nova-linux-x64`
+            - **macOS (x64)**: `nova-macos-x64`
+            - **macOS (ARM64)**: `nova-macos-arm64`
+            - **Windows (x64)**: `nova-windows-x64.exe`
+
+            ## 🔧 Installation:
+
+            1. Download the binary for your platform
+            2. Make it executable: `chmod +x nova-*` (Linux/macOS)
+            3. Move to PATH: `sudo mv nova-* /usr/local/bin/nova`
+            4. Run: `nova help`
+
+            ## 📋 Changes in this release:
+            - Built from commit: ${{ github.sha }}
+            - Commit message: ${{ github.event.head_commit.message }}
+          files: release/*
+          draft: false
+          prerelease: false
