@@ -23,6 +23,7 @@ ${colors.bold}SUBCOMMANDS:${colors.reset}
     ${colors.green}command${colors.reset}  -l|--long <prompt>  Long mode - continue after execution, stop only on Esc
     ${colors.green}chat${colors.reset}                        Start an interactive chat session with the AI
     ${colors.green}install${colors.reset}                     Set up shell shortcuts for nova commands
+    ${colors.green}install${colors.reset}  -a|--auto          Install with default shortcuts (no prompts)
     ${colors.green}help${colors.reset}                        Show this help message
 
 ${colors.bold}EXAMPLES:${colors.reset}
@@ -31,6 +32,7 @@ ${colors.bold}EXAMPLES:${colors.reset}
     nova command -l "list files and then analyze them"
     nova chat
     nova install
+    nova install --auto
     nova help`);
 }
 
@@ -91,7 +93,17 @@ async function main() {
 				break;
 			}
 			case "install": {
-				await handleInstall();
+				// Check for auto mode flags
+				let autoMode = false;
+
+				if (
+					subcommandArgs.length > 0 &&
+					(subcommandArgs[0] === "-a" || subcommandArgs[0] === "--auto")
+				) {
+					autoMode = true;
+				}
+
+				await handleInstall(autoMode);
 				break;
 			}
 			case "help":

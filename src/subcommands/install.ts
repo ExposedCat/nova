@@ -43,7 +43,26 @@ function validateShortcut(shortcut: string): boolean {
 	return true;
 }
 
-async function promptForShortcuts(): Promise<ShortcutConfig> {
+async function promptForShortcuts(
+	autoMode: boolean = false,
+): Promise<ShortcutConfig> {
+	if (autoMode) {
+		console.log(
+			`${colors.bold}${colors.blue}Nova Install (Auto Mode)${colors.reset}\n`,
+		);
+		console.log("Using default shortcuts:");
+		console.log(
+			`  ${colors.blue}nova command${colors.reset} → ${colors.green}${defaultShortcuts.command}${colors.reset}`,
+		);
+		console.log(
+			`  ${colors.blue}nova command -l${colors.reset} → ${colors.green}${defaultShortcuts.commandLong}${colors.reset}`,
+		);
+		console.log(
+			`  ${colors.blue}nova chat${colors.reset} → ${colors.green}${defaultShortcuts.chat}${colors.reset}\n`,
+		);
+		return defaultShortcuts;
+	}
+
 	console.log(`${colors.bold}${colors.blue}Nova Install${colors.reset}\n`);
 	console.log("Setting up shell shortcuts for Nova commands.");
 
@@ -224,9 +243,9 @@ async function updateRcFile(rcFile: string, content: string): Promise<void> {
 	await Deno.writeTextFile(rcFile, content, { append: true });
 }
 
-export async function handleInstall() {
+export async function handleInstall(autoMode: boolean = false) {
 	try {
-		const shortcuts = await promptForShortcuts();
+		const shortcuts = await promptForShortcuts(autoMode);
 		const { shell, rcFile } = detectShell();
 
 		console.log(`\n${colors.bold}Configuration:${colors.reset}`);
@@ -240,19 +259,21 @@ export async function handleInstall() {
 		console.log(`  Shell: ${colors.green}${shell}${colors.reset}`);
 		console.log(`  RC file: ${colors.green}${rcFile}${colors.reset}\n`);
 
-		const confirm = await readInput(
-			`Proceed with installation? [${colors.green}Y${colors.reset}/n]: `,
-		);
+		if (!autoMode) {
+			const confirm = await readInput(
+				`Proceed with installation? [${colors.green}Y${colors.reset}/n]: `,
+			);
 
-		// Handle EOF (Ctrl+D)
-		if (confirm === null) {
-			console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
-			return;
-		}
+			// Handle EOF (Ctrl+D)
+			if (confirm === null) {
+				console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
+				return;
+			}
 
-		if (confirm.toLowerCase() === "n" || confirm.toLowerCase() === "no") {
-			console.log("Installation cancelled.");
-			return;
+			if (confirm.toLowerCase() === "n" || confirm.toLowerCase() === "no") {
+				console.log("Installation cancelled.");
+				return;
+			}
 		}
 
 		const aliases = generateAliases(shortcuts, shell);
