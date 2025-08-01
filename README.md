@@ -1,6 +1,6 @@
 # NOVA - Neural Operational Virtual Assistant
 
-![CI/CD](https://github.com/YOUR_USERNAME/nova/workflows/CI%2FCD/badge.svg)
+![CI/CD](https://github.com/exposedcat/nova/workflows/CI%2FCD/badge.svg)
 
 AI-powered command line assistant that generates and executes shell commands
 from natural language.
@@ -8,7 +8,7 @@ from natural language.
 ## Quick Install
 
 Download the latest release for your platform from the
-[Releases page](https://github.com/YOUR_USERNAME/nova/releases).
+[Releases page](https://github.com/exposedcat/nova/releases).
 
 ```bash
 curl -L https://github.com/exposedcat/nova/releases/latest/download/nova-linux-x64 -o nova
