@@ -22,14 +22,15 @@ const defaultShortcuts: ShortcutConfig = {
 	chat: "aurora",
 };
 
-async function readInput(prompt: string): Promise<string> {
+async function readInput(prompt: string): Promise<string | null> {
 	await Deno.stdout.write(new TextEncoder().encode(prompt));
 	const decoder = new TextDecoder();
 	const buffer = new Uint8Array(1024);
 
 	const bytesRead = await Deno.stdin.read(buffer);
 	if (bytesRead === null) {
-		return "";
+		// EOF encountered (Ctrl+D)
+		return null;
 	}
 
 	return decoder.decode(buffer.subarray(0, bytesRead)).trim();
@@ -45,15 +46,18 @@ function validateShortcut(shortcut: string): boolean {
 async function promptForShortcuts(): Promise<ShortcutConfig> {
 	console.log(`${colors.bold}${colors.blue}Nova Install${colors.reset}\n`);
 	console.log("Setting up shell shortcuts for Nova commands.");
-	console.log(
-		`${colors.dim}Press Enter to use default values.${colors.reset}\n`,
-	);
 
 	let command: string;
 	while (true) {
 		const input = await readInput(
 			`Shortcut for "${colors.blue}nova command${colors.reset}" [${colors.green}${defaultShortcuts.command}${colors.reset}]: `,
 		);
+
+		// Handle EOF (Ctrl+D)
+		if (input === null) {
+			console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
+			Deno.exit(0);
+		}
 
 		command = input || defaultShortcuts.command;
 
@@ -72,6 +76,12 @@ async function promptForShortcuts(): Promise<ShortcutConfig> {
 			`Shortcut for "${colors.blue}nova command -l${colors.reset}" [${colors.green}${defaultShortcuts.commandLong}${colors.reset}]: `,
 		);
 
+		// Handle EOF (Ctrl+D)
+		if (input === null) {
+			console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
+			Deno.exit(0);
+		}
+
 		commandLong = input || defaultShortcuts.commandLong;
 
 		if (validateShortcut(commandLong)) {
@@ -88,6 +98,12 @@ async function promptForShortcuts(): Promise<ShortcutConfig> {
 		const input = await readInput(
 			`Shortcut for "${colors.blue}nova chat${colors.reset}" [${colors.green}${defaultShortcuts.chat}${colors.reset}]: `,
 		);
+
+		// Handle EOF (Ctrl+D)
+		if (input === null) {
+			console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
+			Deno.exit(0);
+		}
 
 		chat = input || defaultShortcuts.chat;
 
@@ -121,18 +137,22 @@ function generateAliases(shortcuts: ShortcutConfig, shell: string): string {
 
 	if (shell === "fish") {
 		return `
+# __NOVA_START__
 # Nova shortcuts - added by nova install (${timestamp})
 alias ${shortcuts.command} 'nova command'
 alias ${shortcuts.commandLong} 'nova command -l'
 alias ${shortcuts.chat} 'nova chat'
+# __NOVA_END__
 `;
 	} else {
 		// bash/zsh
 		return `
+# __NOVA_START__
 # Nova shortcuts - added by nova install (${timestamp})
 alias ${shortcuts.command}='nova command'
 alias ${shortcuts.commandLong}='nova command -l'
 alias ${shortcuts.chat}='nova chat'
+# __NOVA_END__
 `;
 	}
 }
@@ -142,6 +162,7 @@ async function ensureRcFileExists(rcFile: string): Promise<void> {
 		await Deno.stat(rcFile);
 	} catch (error) {
 		if (error instanceof Deno.errors.NotFound) {
+			// Create the file if it doesn't exist
 			await Deno.writeTextFile(rcFile, "");
 		} else {
 			throw error;
@@ -149,8 +170,57 @@ async function ensureRcFileExists(rcFile: string): Promise<void> {
 	}
 }
 
-async function appendToRcFile(rcFile: string, content: string): Promise<void> {
+async function removeOldNovaSection(rcFile: string): Promise<boolean> {
+	try {
+		const content = await Deno.readTextFile(rcFile);
+		const lines = content.split("\n");
+
+		let startIndex = -1;
+		let endIndex = -1;
+
+		// Find Nova markers
+		for (let i = 0; i < lines.length; i++) {
+			if (lines[i].trim() === "# __NOVA_START__") {
+				startIndex = i;
+			} else if (lines[i].trim() === "# __NOVA_END__") {
+				endIndex = i;
+				break;
+			}
+		}
+
+		// If both markers found, remove the section
+		if (startIndex !== -1 && endIndex !== -1) {
+			const newLines = [
+				...lines.slice(0, startIndex),
+				...lines.slice(endIndex + 1),
+			];
+
+			await Deno.writeTextFile(rcFile, newLines.join("\n"));
+			return true; // Removed old section
+		}
+
+		return false; // No old section found
+	} catch (error) {
+		if (error instanceof Deno.errors.NotFound) {
+			return false; // File doesn't exist, nothing to remove
+		}
+		throw error;
+	}
+}
+
+async function updateRcFile(rcFile: string, content: string): Promise<void> {
 	await ensureRcFileExists(rcFile);
+
+	// Remove old Nova installation if it exists
+	const removedOld = await removeOldNovaSection(rcFile);
+
+	if (removedOld) {
+		console.log(
+			`${colors.yellow}↻${colors.reset} Removed previous Nova installation`,
+		);
+	}
+
+	// Add new Nova installation
 	await Deno.writeTextFile(rcFile, content, { append: true });
 }
 
@@ -174,13 +244,19 @@ export async function handleInstall() {
 			`Proceed with installation? [${colors.green}Y${colors.reset}/n]: `,
 		);
 
+		// Handle EOF (Ctrl+D)
+		if (confirm === null) {
+			console.log(`\n${colors.dim}Installation cancelled.${colors.reset}`);
+			return;
+		}
+
 		if (confirm.toLowerCase() === "n" || confirm.toLowerCase() === "no") {
 			console.log("Installation cancelled.");
 			return;
 		}
 
 		const aliases = generateAliases(shortcuts, shell);
-		await appendToRcFile(rcFile, aliases);
+		await updateRcFile(rcFile, aliases);
 
 		console.log(`${colors.green}✓${colors.reset} Aliases added to ${rcFile}`);
 		console.log(

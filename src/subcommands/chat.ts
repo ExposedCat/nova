@@ -10,14 +10,15 @@ const colors = {
 	dim: "\x1b[2m",
 };
 
-async function readInput(prompt: string): Promise<string> {
+async function readInput(prompt: string): Promise<string | null> {
 	await Deno.stdout.write(new TextEncoder().encode(prompt));
 	const decoder = new TextDecoder();
 	const buffer = new Uint8Array(1024);
 
 	const bytesRead = await Deno.stdin.read(buffer);
 	if (bytesRead === null) {
-		return "";
+		// EOF encountered (Ctrl+D)
+		return null;
 	}
 
 	return decoder.decode(buffer.subarray(0, bytesRead)).trim();
@@ -31,6 +32,11 @@ export async function handleChat() {
 			const userInput = await readInput(
 				`${colors.bold}${colors.blue}You:${colors.reset} `,
 			);
+
+			if (userInput === null) {
+				console.log(`\n${colors.dim}Goodbye!${colors.reset}`);
+				break;
+			}
 
 			if (userInput.trim() === "") {
 				continue;
