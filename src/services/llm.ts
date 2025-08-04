@@ -1,3 +1,6 @@
+import * as ollama from "./ollama.ts";
+import * as gemini from "./gemini.ts";
+
 export type Message = {
 	role: "user" | "assistant" | "system";
 	content: string;
@@ -8,7 +11,17 @@ export type CommandResponse = {
 	command: string;
 };
 
-export async function chatCompletion(
+function getService() {
+	const url = Deno.env.get("NOVA_LLM_URL") ?? "http://localhost:11434/api/chat";
+	return url === "gemini" ? gemini : ollama;
+}
+
+function getDefaultModel() {
+	const url = Deno.env.get("NOVA_LLM_URL") ?? "http://localhost:11434/api/chat";
+	return url === "gemini" ? "gemini-2.0-flash" : "gemma3n:e4b";
+}
+
+export function chatCompletion(
 	messages: Message[],
 	options: {
 		format?: "json" | object;
@@ -16,37 +29,14 @@ export async function chatCompletion(
 		model?: string;
 	} = {},
 ): Promise<string> {
-	const body: any = {
-		model: options.model ?? Deno.env.get("OLLAMA_MODEL") ?? "gemma3n:e4b",
-		messages: messages,
-		stream: options.stream ?? false,
-	};
+	const service = getService();
+	const model =
+		options.model ?? Deno.env.get("NOVA_MODEL") ?? getDefaultModel();
 
-	if (options.format) {
-		if (options.format === "json") {
-			body.format = "json";
-		} else if (typeof options.format === "object") {
-			body.format = options.format;
-		}
-	}
-
-	const response = await fetch(
-		Deno.env.get("OLLAMA_URL") ?? "http://localhost:11434/api/chat",
-		{
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(body),
-		},
-	);
-
-	if (!response.ok) {
-		throw new Error(
-			`Ollama API error: ${response.status} ${response.statusText}`,
-		);
-	}
-
-	const data = await response.json();
-	return data.message.content;
+	return service.chatCompletion(messages, {
+		...options,
+		model,
+	});
 }
 
 export async function generateCommand(

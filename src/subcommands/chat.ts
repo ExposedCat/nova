@@ -1,4 +1,4 @@
-import { type Message, chatCompletion } from "../ollama.ts";
+import { type Message, chatCompletion } from "../services/llm.ts";
 import { Loader } from "../loader.ts";
 
 const colors = {

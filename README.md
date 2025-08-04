@@ -10,10 +10,24 @@ from natural language.
 Download the latest release for your platform from the
 [Releases page](https://github.com/exposedcat/nova/releases).
 
+Setup environment:
+
+```bash
+# Use Ollama (default)
+export NOVA_LLM_URL="http://your-server:11434/api/chat"
+export NOVA_MODEL="gemma3n:e4b"  # optional, model to use
+
+# Use Google Gemini instead
+export NOVA_LLM_URL="gemini"
+export NOVA_MODEL="gemini-2.0-flash"  # optional, defaults to gemini-2.0-flash
+export NOVA_GEMINI_API_KEY="your_api_key"  # required for Gemini
+```
+
 ```bash
 curl -L https://github.com/exposedcat/nova/releases/latest/download/nova-linux-x64 -o nova
 chmod +x nova
 sudo mv nova /usr/local/bin/
+nova install
 ```
 
 ## Build
@@ -65,4 +79,4 @@ nova chat
 ## Requirements
 
 - [Deno v2+](https://deno.land/) runtime
-- Ollama running locally for AI functionality
+- AI backend: Ollama (local) or Google Gemini API

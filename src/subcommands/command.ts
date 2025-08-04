@@ -1,5 +1,5 @@
 import { execute } from "../cli.ts";
-import { type Message, generateCommand } from "../ollama.ts";
+import { type Message, generateCommand } from "../services/llm.ts";
 import { systemPrompt } from "../prompts.ts";
 import { Loader } from "../loader.ts";
 
